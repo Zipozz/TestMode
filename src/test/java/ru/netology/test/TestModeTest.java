@@ -15,8 +15,6 @@ import static com.codeborne.selenide.Selenide.open;
 
 public class TestModeTest {
 
-    User user = new User();
-    Faker faker = new Faker();
 
     @BeforeEach
     void Setup() {
