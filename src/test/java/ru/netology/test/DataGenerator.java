@@ -1,50 +1,61 @@
 package ru.netology.test;
 
 import com.github.javafaker.Faker;
+import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
-import java.util.Locale;
-import static io.restassured.RestAssured.given;
 
-public class DataGenerator {
+import java.util.Locale;
+
+
+class DataGenerator {
+
+    private static Faker faker = new Faker(new Locale("en"));
+
     private DataGenerator() {
     }
 
-    public static class Registration {
-        private Registration() {
-        }
+    public static RequestSpecification requestSpecification = new RequestSpecBuilder()
+            .setBaseUri("http://localhost")
+            .setPort(9999)
+            .setAccept(ContentType.JSON)
+            .setContentType(ContentType.JSON)
+            .log(LogDetail.ALL)
+            .build();
 
-        public static User generateActiveUser() {
-            Faker faker = new Faker(new Locale("usa"));
-            return new User(faker.name().firstName(), faker.internet().password(), "active");
-        }
-
-        public static User generateBlockedUser() {
-            Faker faker = new Faker(new Locale("usa"));
-            return new User(faker.name().firstName(), faker.internet().password(), "blocked");
-        }
+    public static void postUser(UserInfo registration) {
+        RestAssured.given()
+                .spec(requestSpecification)
+                .body(registration)
+                .when()
+                .post("/api/system/users")
+                .then()
+                .statusCode(200);
     }
 
-    public static class SendOnServer {
-        private static RequestSpecification requestSpec = new RequestSpecBuilder()
-                .setBaseUri("http://localhost")
-                .setPort(9999)
-                .setAccept(ContentType.JSON)
-                .setContentType(ContentType.JSON)
-                .log(LogDetail.ALL)
-                .build();
 
-        public static void setUpAll(User user) {
-            // сам запрос
-            given() // "дано"
-                    .spec(requestSpec) // указываем, какую спецификацию используем
-                    .body(user) // передаём в теле объект, который будет преобразован в JSON
-                    .when() // "когда"
-                    .post("/api/system/users") // на какой путь, относительно BaseUri отправляем запрос
-                    .then() // "тогда ожидаем"
-                    .statusCode(200); // код 200 OK
-        }
+    public static UserInfo getNewUser(String status) {
+
+        String login = faker.name().fullName();
+        String password = faker.internet().password();
+        UserInfo registration = new UserInfo(login, password, status);
+        postUser(registration);
+        return registration;
     }
+
+
+    public static String getNewPassword() {
+
+        return faker.internet().password();
+    }
+
+    public static String getNewLogin() {
+
+        return faker.name().fullName();
+    }
+
+
+
 }
